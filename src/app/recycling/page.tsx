@@ -9,6 +9,8 @@ import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestor
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-context';
 import type { WasteReport } from '@/lib/types';
+import { WasteReportsTableSkeleton } from '@/components/tracking/waste-reports-table-skeleton';
+import { Info } from 'lucide-react';
 
 export default function RecyclingPage() {
   const { user } = useAuth();
@@ -57,7 +59,19 @@ export default function RecyclingPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {loading ? <p>Loading collections...</p> : <RecyclingDashboardTable reports={reports} />}
+                {loading ? (
+                  <WasteReportsTableSkeleton />
+                ) : reports.length > 0 ? (
+                  <RecyclingDashboardTable reports={reports} />
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-4 rounded-md border border-dashed p-8 text-center">
+                    <Info className="h-10 w-10 text-muted-foreground" />
+                    <h2 className="text-xl font-semibold">No Pending Collections</h2>
+                    <p className="text-muted-foreground">
+                      There are currently no active waste reports assigned.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
