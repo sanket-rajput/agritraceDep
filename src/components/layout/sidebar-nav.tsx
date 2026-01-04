@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, Tractor, Map, Recycle, Leaf, Bot } from 'lucide-react';
+import { LayoutDashboard, Tractor, Map, Recycle, Leaf } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 
 const farmerNavItems = [

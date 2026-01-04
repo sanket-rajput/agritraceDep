@@ -7,8 +7,10 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
+  sendEmailVerification,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp, DocumentData } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
@@ -26,6 +28,8 @@ type AuthContextType = {
   signup: (email: string, pass: string) => Promise<void>;
   logout: () => void;
   setUserRole: (role: 'farmer' | 'agent') => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  resendVerification: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -64,7 +68,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, pass: string) => {
-    await signInWithEmailAndPassword(auth, email, pass);
+    const cred = await signInWithEmailAndPassword(auth, email, pass);
+    if (!cred.user.emailVerified) {
+      // sign out so callers don't have a partially signed-in user
+      await signOut(auth);
+      throw new Error('Please verify your email address before signing in.');
+    }
   };
 
   const signup = async (email: string, pass: string) => {
@@ -76,6 +85,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: firebaseUser.email,
       createdAt: serverTimestamp(),
     });
+
+    // Send verification email and prompt the user to check their inbox
+    await sendEmailVerification(firebaseUser);
   };
 
   const logout = async () => {
@@ -90,6 +102,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser((prevUser) => ({ ...prevUser!, role }));
     }
   };
+
+  const sendPasswordReset = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  };
+
+  const resendVerification = async () => {
+    if (!auth.currentUser) throw new Error('No current user to resend verification for.');
+    await sendEmailVerification(auth.currentUser);
+  };
   
   const value = {
     user,
@@ -98,6 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signup,
     logout,
     setUserRole,
+    sendPasswordReset,
+    resendVerification,
   };
 
   return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;

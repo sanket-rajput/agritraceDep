@@ -24,23 +24,29 @@ export default function SignupPage() {
   const { signup } = useAuth();
   const { toast } = useToast();
 
+  const [loadingLocal, setLoadingLocal] = useState(false);
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoadingLocal(true);
     try {
       await signup(email, password);
       toast({
         title: 'Signup Successful',
-        description: 'Please choose your role to continue.',
+        description: 'Verification email sent. Please verify your email before logging in.',
       });
+      // After signup, ask the user to verify email — let them choose role after verifying
       router.push('/role-selection');
     } catch (err: any) {
       setError(err.message);
       toast({
         variant: 'destructive',
         title: 'Signup Failed',
-        description: err.message,
+        description: err.message || 'Could not create account',
       });
+    } finally {
+      setLoadingLocal(false);
     }
   };
 
@@ -80,8 +86,8 @@ export default function SignupPage() {
               />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full">
-              Create account
+            <Button type="submit" className="w-full" disabled={loadingLocal}>
+              {loadingLocal ? 'Creating...' : 'Create account'}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">

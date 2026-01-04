@@ -33,9 +33,12 @@ export default function LoginPage() {
     }
   }, [user, loading, router]);
 
+  const [loadingLocal, setLoadingLocal] = useState(false);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoadingLocal(true);
 
     try {
       await login(email, password);
@@ -54,6 +57,8 @@ export default function LoginPage() {
         title: 'Login Failed',
         description: err.message || 'Invalid credentials',
       });
+    } finally {
+      setLoadingLocal(false);
     }
   };
 
@@ -88,7 +93,7 @@ export default function LoginPage() {
               <div className="flex items-center">
                 <Label htmlFor="password">Password</Label>
                 <Link
-                  href="#"
+                  href="/reset-password"
                   className="ml-auto inline-block text-sm underline"
                 >
                   Forgot your password?
@@ -108,8 +113,8 @@ export default function LoginPage() {
               <p className="text-sm text-red-500">{error}</p>
             )}
 
-            <Button type="submit" className="w-full">
-              Login
+            <Button type="submit" className="w-full" disabled={loadingLocal}>
+              {loadingLocal ? 'Logging in...' : 'Login'}
             </Button>
           </form>
 

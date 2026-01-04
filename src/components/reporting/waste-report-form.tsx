@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,10 +23,9 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useFirebase } from '@/hooks/use-firebase';
 import { Tractor } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 const formSchema = z.object({
   cropType: z.enum(['Wheat', 'Corn', 'Rice', 'Sugarcane', 'Cotton']),
@@ -39,6 +37,7 @@ const formSchema = z.object({
 export function WasteReportForm() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { createReport } = useFirebase();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -59,18 +58,15 @@ export function WasteReportForm() {
     }
 
     try {
-      const docRef = await addDoc(collection(db, 'wasteReports'), {
+      const id = await createReport({
         ...values,
         farmerId: user.uid,
         farmerName: user.name || user.email,
-        status: 'Reported',
-        reportedAt: serverTimestamp(),
-        lastUpdate: serverTimestamp(),
       });
 
       toast({
         title: 'Report Submitted!',
-        description: `Your request (ID: ${docRef.id}) for ${values.quantity} tons of ${values.cropType} has been received.`,
+        description: `Your request (ID: ${id}) for ${values.quantity} tons of ${values.cropType} has been received.`,
       });
       form.reset();
     } catch (error) {
@@ -78,7 +74,7 @@ export function WasteReportForm() {
       toast({
         variant: 'destructive',
         title: 'Submission Failed',
-        description: 'There was an error submitting your report. Please try again.',
+        description: (error as any)?.message || 'There was an error submitting your report. Please try again.',
       });
     }
   }
@@ -158,9 +154,9 @@ export function WasteReportForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90">
+        <Button type="submit" disabled={form.formState.isSubmitting} className="bg-accent text-accent-foreground hover:bg-accent/90" aria-busy={form.formState.isSubmitting}>
           <Tractor className="mr-2 h-4 w-4" />
-          Schedule Collection
+          {form.formState.isSubmitting ? 'Submitting...' : 'Schedule Collection'}
         </Button>
       </form>
     </Form>

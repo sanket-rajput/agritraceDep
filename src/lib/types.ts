@@ -16,3 +16,24 @@ export type WasteReport = {
   payment?: number;
   paymentStatus?: 'Pending' | 'Paid';
 };
+
+export type Listing = {
+  id?: string;
+  title: string;
+  price: number;
+  location: string;
+  category: string;
+  ownerId: string;
+  img?: string;
+  createdAt?: Timestamp | Date;
+};
+
+export type Order = {
+  id?: string;
+  listingId: string;
+  buyerId: string;
+  sellerId: string;
+  price: number;
+  status?: 'Pending' | 'Accepted' | 'Rejected' | 'Cancelled' | 'Completed';
+  createdAt?: Timestamp | Date;
+};
